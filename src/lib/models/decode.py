@@ -495,7 +495,7 @@ def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
     return detections
 
 def multi_pose_decode(
-    heat, wh, kps, reg=None, hm_hp=None, hp_offset=None, K=100):
+    heat, wh, kps, reg=None, hm_hp=None, hp_offset=None, K=100, is_train=True):
   batch, cat, height, width = heat.size()
   num_joints = kps.shape[1] // 2
   # heat = torch.sigmoid(heat)
@@ -567,5 +567,7 @@ def multi_pose_decode(
       kps = kps.permute(0, 2, 1, 3).contiguous().view(
           batch, K, num_joints * 2)
   detections = torch.cat([bboxes, scores, kps, clses], dim=2)
-    
-  return detections
+  if is_train == True:
+      return detections
+  else:
+      return [detections, hm_score.tolist()]
