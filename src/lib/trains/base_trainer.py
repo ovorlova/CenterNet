@@ -7,7 +7,7 @@ import torch
 from progress.bar import Bar
 from models.data_parallel import DataParallel
 from utils.utils import AverageMeter
-
+from tensorboardX import SummaryWriter
 
 class ModelWithLoss(torch.nn.Module):
   def __init__(self, model, loss):
@@ -41,7 +41,7 @@ class BaseTrainer(object):
         if isinstance(v, torch.Tensor):
           state[k] = v.to(device=device, non_blocking=True)
 
-  def run_epoch(self, phase, epoch, data_loader):
+  def run_epoch(self, phase, epoch, data_loader, writer=None):
     model_with_loss = self.model_with_loss
     if phase == 'train':
       model_with_loss.train()
@@ -68,6 +68,12 @@ class BaseTrainer(object):
           batch[k] = batch[k].to(device=opt.device, non_blocking=True)    
       output, loss, loss_stats = model_with_loss(batch)
       loss = loss.mean()
+      if writer is not None:
+        if phase == 'train':
+          writer.add_scalar('Train/Loss', loss, epoch*len(data_loader)+iter_id)
+        else:
+          writer.add_scalar('Val/Loss', loss, epoch*len(data_loader)+iter_id)
+
       if phase == 'train':
         self.optimizer.zero_grad()
         loss.backward()
@@ -101,7 +107,7 @@ class BaseTrainer(object):
     bar.finish()
     ret = {k: v.avg for k, v in avg_loss_stats.items()}
     ret['time'] = bar.elapsed_td.total_seconds() / 60.
-    return ret, results
+    return ret, results, writer
   
   def debug(self, batch, output, iter_id):
     raise NotImplementedError
@@ -112,8 +118,8 @@ class BaseTrainer(object):
   def _get_losses(self, opt):
     raise NotImplementedError
   
-  def val(self, epoch, data_loader):
-    return self.run_epoch('val', epoch, data_loader)
+  def val(self, epoch, data_loader, writer=None):
+    return self.run_epoch('val', epoch, data_loader, writer)
 
-  def train(self, epoch, data_loader):
-    return self.run_epoch('train', epoch, data_loader)
+  def train(self, epoch, data_loader, writer=None):
+    return self.run_epoch('train', epoch, data_loader, writer)

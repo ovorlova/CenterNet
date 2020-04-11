@@ -102,6 +102,7 @@ class MultiPoseTrainer(BaseTrainer):
     dets = multi_pose_decode(
       output['hm'], output['wh'], output['hps'], 
       reg=reg, hm_hp=hm_hp, hp_offset=hp_offset, K=opt.K)
+    dets = dets[0]
     dets = dets.detach().cpu().numpy().reshape(1, -1, dets.shape[2])
 
     dets[:, :, :4] *= opt.input_res / opt.output_res
@@ -153,7 +154,7 @@ class MultiPoseTrainer(BaseTrainer):
       output['hm'], output['wh'], output['hps'], 
       reg=reg, hm_hp=hm_hp, hp_offset=hp_offset, K=self.opt.K)
     dets = dets.detach().cpu().numpy().reshape(1, -1, dets.shape[2])
-    
+    dets = dets[0]
     dets_out = multi_pose_post_process(
       dets.copy(), batch['meta']['c'].cpu().numpy(),
       batch['meta']['s'].cpu().numpy(),

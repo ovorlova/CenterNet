@@ -52,7 +52,7 @@ class MultiPoseDetector(BaseDetector):
       
       dets = multi_pose_decode(
         output['hm'], output['wh'], output['hps'],
-        reg=reg, hm_hp=hm_hp, hp_offset=hp_offset, K=self.opt.K)
+        reg=reg, hm_hp=hm_hp, hp_offset=hp_offset, K=self.opt.K, is_train=False)
 
     if return_time:
       return output, dets, forward_time
@@ -65,7 +65,7 @@ class MultiPoseDetector(BaseDetector):
       dets.copy(), [meta['c']], [meta['s']],
       meta['out_height'], meta['out_width'])
     for j in range(1, self.num_classes + 1):
-      dets[0][j] = np.array(dets[0][j], dtype=np.float32).reshape(-1, 39)
+      dets[0][j] = np.array(dets[0][j], dtype=np.float32).reshape(-1, 37)
       # import pdb; pdb.set_trace()
       dets[0][j][:, :4] /= scale
       dets[0][j][:, 5:] /= scale
@@ -83,7 +83,7 @@ class MultiPoseDetector(BaseDetector):
   def debug(self, debugger, images, dets, output, scale=1):
     dets = dets.detach().cpu().numpy().copy()
     dets[:, :, :4] *= self.opt.down_ratio
-    dets[:, :, 5:39] *= self.opt.down_ratio
+    dets[:, :, 5:37] *= self.opt.down_ratio
     img = images[0].detach().cpu().numpy().transpose(1, 2, 0)
     img = np.clip(((
       img * self.std + self.mean) * 255.), 0, 255).astype(np.uint8)

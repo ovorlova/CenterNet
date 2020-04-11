@@ -99,6 +99,7 @@ class BaseDetector(object):
     load_time += (loaded_time - start_time)
     
     detections = []
+    hms = []
     for scale in self.scales:
       scale_start_time = time.time()
       if not pre_processed:
@@ -114,7 +115,8 @@ class BaseDetector(object):
       pre_time += pre_process_time - scale_start_time
       
       output, dets, forward_time = self.process(images, return_time=True)
-
+      hm_score = dets[1]
+      dets = dets[0]
       torch.cuda.synchronize()
       net_time += forward_time - pre_process_time
       decode_time = time.time()
@@ -129,6 +131,7 @@ class BaseDetector(object):
       post_time += post_process_time - decode_time
 
       detections.append(dets)
+      hms.append(hm_score)
     
     results = self.merge_outputs(detections)
     torch.cuda.synchronize()
@@ -141,4 +144,4 @@ class BaseDetector(object):
     
     return {'results': results, 'tot': tot_time, 'load': load_time,
             'pre': pre_time, 'net': net_time, 'dec': dec_time,
-            'post': post_time, 'merge': merge_time}
+            'post': post_time, 'merge': merge_time, 'hm_score' : hms}
