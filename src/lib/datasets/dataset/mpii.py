@@ -7,8 +7,13 @@ from pycocotools.cocoeval import COCOeval
 import numpy as np
 import json
 import os
+from tensorboardX import SummaryWriter
 
 import torch.utils.data as data
+import sys
+sys.path.insert(0, '/home/olga/CenterNet/poseval/py')
+from evaluate import eval
+from eval_helpers import *
 
 class MPII(data.Dataset):
   num_classes = 1
@@ -47,6 +52,8 @@ class MPII(data.Dataset):
  # https://github.com/xingyizhou/CenterNet/issues/280
     self.split = split
     self.opt = opt
+    self.gtFrames = loadGTFrames('/home/olga/CenterNet/data/coco/annotations/', 'val_not_single.json')
+    self.gtFramesSingle = loadGTFrames('/home/olga/CenterNet/data/coco/annotations/', 'val_single.json')
 
     print('==> initializing mpii {} data.'.format(split))
     self.coco = coco.COCO(self.annot_path)
@@ -69,6 +76,12 @@ class MPII(data.Dataset):
   def convert_eval_format(self, all_bboxes, hms=None):
     # import pdb; pdb.set_trace()
     detections = []
+    data = json.load(open(self.annot_path, 'r'))
+    imgs = data['images']
+    inds = {}
+    for img in imgs:
+      inds[img['id']] = img['file_name'][7:]
+    
     for image_id in all_bboxes:
       for cls_ind in all_bboxes[image_id]:
         category_id = 1
@@ -96,7 +109,25 @@ class MPII(data.Dataset):
               "keypoints": keypoints
           }
           detections.append(detection)
-    return detections
+    data = detections
+    dct_image_id = {}
+    for i in range(len(data)):
+        img_id = data[i]['image_id']
+        if inds[img_id] not in dct_image_id:
+            dct_image_id[inds[img_id]] = []
+        lst = []
+        center_score = data[i]['score']
+        for key in range(16):
+            _id = key
+            x = data[i]['keypoints'][key*3]
+            y = data[i]['keypoints'][key*3+1]
+            score = data[i]['keypoints'][key*3+2]
+            lst.append({'id': [_id], 'x': [x], 'y': [y], 'score' : [score]})
+        (dct_image_id[inds[img_id]]).append({'score': [center_score], 'annopoints' : [{"point": lst}]})
+    final_lst = []
+    for key in dct_image_id:
+        final_lst.append({'image' : [{'name' : key}], 'annorect' : dct_image_id[key]})
+    return final_lst
 
   def __len__(self):
     return self.num_samples
@@ -105,18 +136,14 @@ class MPII(data.Dataset):
     json.dump(self.convert_eval_format(results, hms), 
               open('{}/results.json'.format(save_dir), 'w'))
 
+  def run_eval(self, results, save_dir, hms=None, test=False):
+    if test == True:
+    	self.save_results(results, save_dir, hms)
+    dets = {}
+    hms = {}
+    for id_ in results:
+      dets[id_] = results[id_][0]
+      hms[id_] = results[id_][1]
+    return eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(dets, hms))
+    
 
-  def run_eval(self, results, save_dir, hms=None):
-    # result_json = os.path.join(opt.save_dir, "results.json")
-    # detections  = convert_eval_format(all_boxes)
-    # json.dump(detections, open(result_json, "w"))
-    self.save_results(results, save_dir, hms)
-#    coco_dets = self.coco.loadRes('{}/results.json'.format(save_dir))
-#    coco_eval = COCOeval(self.coco, coco_dets, "keypoints")
-#    coco_eval.evaluate()
-#    coco_eval.accumulate()
-#    coco_eval.summarize()
-#    coco_eval = COCOeval(self.coco, coco_dets, "bbox")
-#    coco_eval.evaluate()
-#    coco_eval.accumulate()
-#    coco_eval.summarize()
