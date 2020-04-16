@@ -12,7 +12,7 @@ import time
 from progress.bar import Bar
 import torch
 
-from external.nms import soft_nms
+#from external.nms import soft_nms
 from opts import opts
 from logger import Logger
 from utils.utils import AverageMeter
@@ -84,7 +84,7 @@ def prefetch_test(opt):
   bar.finish()
   #json.dump({'hms': hms, 'results' : results}, open('please_help.json', 'w'))
   #print(hms)
-  dataset.run_eval(results, opt.save_dir, hms)
+  dataset.run_eval(results, opt.save_dir, hms=hms, id='0')
 
 def test(opt):
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
@@ -126,7 +126,7 @@ def test(opt):
   bar.finish()
 
   #json.dump({'hms': hms, 'results' : results}, open('please_help.json', 'w'))
-  print(hms)
+  #print(hms)
   dataset.run_eval(results, opt.save_dir)
 
 if __name__ == '__main__':

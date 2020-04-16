@@ -15,6 +15,7 @@ from logger import Logger
 from datasets.dataset_factory import get_dataset
 from trains.train_factory import train_factory
 from tensorboardX import SummaryWriter
+from os import system
 
 def main(opt):
   torch.manual_seed(opt.seed)
@@ -65,7 +66,8 @@ def main(opt):
   )
 
   print('Starting training...')
-  writer = SummaryWriter()
+  exp_id = 'exp/'+opt.exp_id
+  writer = SummaryWriter(exp_id)
 
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
@@ -87,6 +89,12 @@ def main(opt):
         best = log_dict_val[opt.metric]
         save_model(os.path.join(opt.save_dir, 'model_best.pth'), 
                    epoch, model)
+      ap, pckh = val_loader.dataset.run_eval(preds, '')
+      for name in ap:
+          writer.add_scalar('Val_AP/'+ name, ap[name], epoch//5)
+      for name in pckh:
+          writer.add_scalar('Test_PCKh/'+name, pckh[name], epoch//5)
+
     else:
       save_model(os.path.join(opt.save_dir, 'model_last.pth'), 
                  epoch, model, optimizer)
