@@ -122,12 +122,12 @@ class BaseTrainer(object):
         ln = len(losses['loss'])
         for ls in losses:
           for i in range(ln//25-1):
-            writer.add_scalar('Train/'+ls, np.array(losses[ls][i*25:i*25+50]).mean(), epoch*(ln//25)+i)
-          writer.add_scalar('Train/'+ls, np.array(losses[ls][ln-50:ln]).mean(), epoch*(ln//25 + 1))
+            writer.add_scalar('Train/'+ls, np.array(losses[ls][i*25:i*25+50]).mean(), (epoch-1)*(ln//25)+i)
+          writer.add_scalar('Train/'+ls, np.array(losses[ls][ln-50:ln]).mean(), epoch*(ln//25)-1)
       else:
         #detections = self.merge_outputs(detections)
         for ls in losses:
-          writer.add_scalar('Val/'+ls, np.array(losses[ls]).mean(), epoch//5)
+          writer.add_scalar('Val/'+ls, np.array(losses[ls]).mean(), epoch//opt.val_intervals)
         #results = [detections, hms]
         
 

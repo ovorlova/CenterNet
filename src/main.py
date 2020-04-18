@@ -91,9 +91,9 @@ def main(opt):
                    epoch, model)
       ap, pckh = val_loader.dataset.run_eval(preds, '')
       for name in ap:
-          writer.add_scalar('Val_AP/'+ name, ap[name], epoch//5)
+          writer.add_scalar('Test_AP/'+ name, ap[name], epoch//opt.val_intervals)
       for name in pckh:
-          writer.add_scalar('Test_PCKh/'+name, pckh[name], epoch//5)
+          writer.add_scalar('Test_PCKh/'+name, pckh[name], epoch//opt.val_intervals)
 
     else:
       save_model(os.path.join(opt.save_dir, 'model_last.pth'), 
