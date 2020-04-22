@@ -1,6 +1,6 @@
-[submodule "eval"]
-	path = eval
-	url = https://github.com/ovorlova/eval/
 [submodule "convert"]
 	path = convert
 	url = https://github.com/ovorlova/convert
+[submodule "eval"]
+	path = eval
+	url = https://github.com/ovorlova/eval.git
