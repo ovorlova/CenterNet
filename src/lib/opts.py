@@ -105,7 +105,7 @@ class opts(object):
                              help='multi scale test augmentation.')
     self.parser.add_argument('--nms', action='store_true',
                              help='run nms in testing.')
-    self.parser.add_argument('--K', type=int, default=100,
+    self.parser.add_argument('--K', type=int, default=25,
                              help='max number of output objects.') 
     self.parser.add_argument('--not_prefetch_test', action='store_true',
                              help='not use parallal data pre-processing.')
@@ -224,6 +224,23 @@ class opts(object):
     self.parser.add_argument('--eval_oracle_dep', action='store_true', 
                              help='use ground truth depth.')
 
+    # cyclical learning rate
+    self.parser.add_argument('--cycle_exp', action='store_true', 
+                             help='activate exponential cycling learning rate')
+    self.parser.add_argument('--max_lr', type=float, default = 0.0001, 
+                             help='maximum value')
+    self.parser.add_argument('--base_lr', type=float, default=0.00001, 
+                             help='minimum value')
+    self.parser.add_argument('--step_size', type=float, default=5, 
+                             help='step size times epochs')
+
+
+    self.parser.add_argument('--exp_lr', action='store_true', 
+                             help='activate exponential learning rate')
+    self.parser.add_argument('--gamma', type=float, default=1, 
+                             help='a coefficient to decrease')
+
+
   def parse(self, args=''):
     if args == '':
       opt = self.parser.parse_args()
@@ -321,11 +338,11 @@ class opts(object):
     elif opt.task == 'multi_pose':
       # assert opt.dataset in ['coco_hp']
       opt.flip_idx = dataset.flip_idx
-      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 34}
+      opt.heads = {'hm': opt.num_classes, 'wh': 2, 'hps': 32}
       if opt.reg_offset:
         opt.heads.update({'reg': 2})
       if opt.hm_hp:
-        opt.heads.update({'hm_hp': 17})
+        opt.heads.update({'hm_hp': 16})
       if opt.reg_hp_offset:
         opt.heads.update({'hp_offset': 2})
     else:
@@ -344,9 +361,8 @@ class opts(object):
       'multi_pose': {
         'default_resolution': [512, 512], 'num_classes': 1, 
         'mean': [0.408, 0.447, 0.470], 'std': [0.289, 0.274, 0.278],
-        'dataset': 'coco_hp', 'num_joints': 17,
-        'flip_idx': [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], 
-                     [11, 12], [13, 14], [15, 16]]},
+        'dataset': 'mpii', 'num_joints': 16,
+        'flip_idx': []},
       'ddd': {'default_resolution': [384, 1280], 'num_classes': 3, 
                 'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225],
                 'dataset': 'kitti'},

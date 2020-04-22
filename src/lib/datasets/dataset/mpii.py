@@ -138,12 +138,12 @@ class MPII(data.Dataset):
 
   def run_eval(self, results, save_dir, hms=None, test=False):
     if test == True:
-    	self.save_results(results, save_dir, hms)
-    dets = {}
-    hms = {}
-    for id_ in results:
-      dets[id_] = results[id_][0]
-      hms[id_] = results[id_][1]
-    return eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(dets, hms))
-    
-
+      self.save_results(results, save_dir, hms)
+      print(eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(results, hms)))
+    else:
+      dets = {}
+      hms = {}
+      for id_ in results:
+        dets[id_] = results[id_][0]
+        hms[id_] = results[id_][1]
+      return eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(dets, hms))
