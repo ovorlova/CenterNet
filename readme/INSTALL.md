@@ -64,11 +64,56 @@ After install Anaconda:
     cd $CenterNet_ROOT/src/lib/models/networks/DCNv2
     ./make.sh
     ~~~
-6. [Optional, only required if you are using extremenet or multi-scale testing] Compile NMS if your want to use multi-scale testing or test ExtremeNet.
+
+6. [Optional] Download pertained models for [detection]() or [pose estimation]() and move them to `$CenterNet_ROOT/models/`. More models can be found in [Model zoo](MODEL_ZOO.md).
+
+7. 
+    ~~~
+    git clone https://github.com/ovorlova/eval/ eval
+    git clone https://github.com/ovorlova/convert/ convert
+    ~~~
+    
+
+8. For train run (example for human pose estimation)
 
     ~~~
-    cd $CenterNet_ROOT/src/lib/external
-    make
+    python main.py multi_pose  --batch_size 64 --lr 1.25e-4 --gpus 0 --input_res 128 --dataset mpii --num_epochs 1 --exp_id 1001 --val_intervals 1
     ~~~
 
-7. Download pertained models for [detection]() or [pose estimation]() and move them to `$CenterNet_ROOT/models/`. More models can be found in [Model zoo](MODEL_ZOO.md).
+9. For test run
+
+    ~~~
+    python test.py multi_pose --exp_id dla --keep_res --load_model ../models/model_best_100.pth --trainval --dataset mpii
+    ~~~
+
+
+10. How to solve some of errors
+
+####ImportError: cannot import name 'PILLOW_VERSION'
+
+pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
+    ~~~
+    pip install Pillow==6.1
+    ~~~
+####Some problems with CUDA
+
+check your version of CUDA
+    ~~~
+    nvcc --version
+    ~~~~
+
+For CUDA >= 10.0 use pytorch==1
+
+For CUDA < 10.0 use pytorch==0.4 
+
+####  DCNv2: undefined symbol: __cudaRegisterFatBinaryEnd
+
+    ~~~
+    cd ~/Code/CenterNet/src/lib/models/networks
+    rm -r DCNv2
+    git clone https://github.com/CharlesShang/DCNv2.git
+    cd DCNv2
+    sh make.sh
+    ~~~~
+
+
