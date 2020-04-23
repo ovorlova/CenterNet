@@ -11,7 +11,7 @@ from tensorboardX import SummaryWriter
 
 import torch.utils.data as data
 import sys
-sys.path.insert(0, '/home/olga/CenterNet/poseval/py')
+sys.path.insert(0, '../../../../eval')
 from evaluate import eval
 from eval_helpers import *
 
@@ -52,8 +52,8 @@ class MPII(data.Dataset):
  # https://github.com/xingyizhou/CenterNet/issues/280
     self.split = split
     self.opt = opt
-    self.gtFrames = loadGTFrames('/home/olga/CenterNet/data/coco/annotations/', 'val_not_single.json')
-    self.gtFramesSingle = loadGTFrames('/home/olga/CenterNet/data/coco/annotations/', 'val_single.json')
+    self.gtFrames = loadGTFrames('../../data/coco/annotations/', 'val_not_single.json')
+    self.gtFramesSingle = loadGTFrames('../../data/coco/annotations/', 'val_single.json')
 
     print('==> initializing mpii {} data.'.format(split))
     self.coco = coco.COCO(self.annot_path)

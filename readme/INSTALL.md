@@ -1,9 +1,6 @@
 # Installation
 
 
-The code was tested on Ubuntu 16.04, with [Anaconda](https://www.anaconda.com/download) Python 3.6 and [PyTorch]((http://pytorch.org/)) v0.4.1. NVIDIA GPUs are needed for both training and testing.
-After install Anaconda:
-
 0. [Optional but recommended] create a new conda environment. 
 
     ~~~
@@ -15,7 +12,7 @@ After install Anaconda:
     conda activate CenterNet
     ~~~
 
-1. Install pytorch0.4.1:
+1. Install pytorch 0.4.1:
 
     ~~~
     conda install pytorch=0.4.1 torchvision -c pytorch
@@ -32,6 +29,19 @@ After install Anaconda:
      ~~~
      
      For other pytorch version, you can manually open `torch/nn/functional.py` and find the line with `torch.batch_norm` and replace the `torch.backends.cudnn.enabled` with `False`. We observed slight worse training results without doing so. 
+
+    check your version of CUDA and install correct version of pytorch
+
+####For CUDA >= 10.0 use pytorch==1.0
+
+####For CUDA < 10.0 use pytorch==0.4.1
+
+    ~~~
+    nvcc --version
+    conda install pytorch torchvision cudatoolkit==10.0 -c pytorch
+    ~~~~
+
+
      
 2. Install [COCOAPI](https://github.com/cocodataset/cocoapi):
 
@@ -72,22 +82,28 @@ After install Anaconda:
     git clone https://github.com/ovorlova/eval/ eval
     git clone https://github.com/ovorlova/convert/ convert
     ~~~
+
+8. Download data from the website: http://human-pose.mpi-inf.mpg.de/ (in 'Downloads')
+
+9. Place it in $CenterNet_ROOT/data/coco
+
+10. Place annotations from $CenterNet_ROOT/data to $CenterNet_ROOT/data/coco/annotations
     
 
-8. For train run (example for human pose estimation)
+11. For train run (example for human pose estimation)
 
     ~~~
-    python main.py multi_pose  --batch_size 64 --lr 1.25e-4 --gpus 0 --input_res 128 --dataset mpii --num_epochs 1 --exp_id 1001 --val_intervals 1
+    python main.py multi_pose --batch_size 64 --lr 1.25e-4 --gpus 0 --input_res 128 --dataset mpii --num_epochs 100 
     ~~~
 
-9. For test run
+12. For test run
 
     ~~~
-    python test.py multi_pose --exp_id dla --keep_res --load_model ../models/model_best_100.pth --trainval --dataset mpii
+    python test.py multi_pose --load_model ../models/model_best_100.pth --trainval --dataset mpii
     ~~~
 
 
-10. How to solve some of errors
+13. How to solve some of errors
 
 ####ImportError: cannot import name 'PILLOW_VERSION'
 
@@ -97,14 +113,7 @@ pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
     ~~~
 ####Some problems with CUDA
 
-check your version of CUDA
-    ~~~
-    nvcc --version
-    ~~~~
 
-For CUDA >= 10.0 use pytorch==1
-
-For CUDA < 10.0 use pytorch==0.4 
 
 ####  DCNv2: undefined symbol: __cudaRegisterFatBinaryEnd
 
@@ -114,6 +123,13 @@ For CUDA < 10.0 use pytorch==0.4
     git clone https://github.com/CharlesShang/DCNv2.git
     cd DCNv2
     sh make.sh
-    ~~~~
+    ~~~
 
+####  error: command 'g++' failed with exit status 1
+
+install cython:
+
+    ~~~
+    conda install cython
+    ~~~
 

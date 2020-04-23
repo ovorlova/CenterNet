@@ -5,3 +5,10 @@ progress
 matplotlib
 easydict
 scipy
+tensorboardx
+shapely
+click
+tqdm
+motmetrics
+progress
+
