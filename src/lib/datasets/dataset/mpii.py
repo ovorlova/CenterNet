@@ -11,7 +11,8 @@ from tensorboardX import SummaryWriter
 
 import torch.utils.data as data
 import sys
-sys.path.insert(0, '../../../../eval')
+##sys.path.append(os.path.join(sys.path[0], '../../../../eval'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../eval'))
 from evaluate import eval
 from eval_helpers import *
 
@@ -52,8 +53,8 @@ class MPII(data.Dataset):
  # https://github.com/xingyizhou/CenterNet/issues/280
     self.split = split
     self.opt = opt
-    self.gtFrames = loadGTFrames('../../data/coco/annotations/', 'val_not_single.json')
-    self.gtFramesSingle = loadGTFrames('../../data/coco/annotations/', 'val_single.json')
+    self.gtFrames = loadGTFrames('../data/coco/annotations/', 'val_not_single.json')
+    self.gtFramesSingle = loadGTFrames('../data/coco/annotations/', 'val_single.json')
 
     print('==> initializing mpii {} data.'.format(split))
     self.coco = coco.COCO(self.annot_path)
@@ -139,7 +140,7 @@ class MPII(data.Dataset):
   def run_eval(self, results, save_dir, hms=None, test=False):
     if test == True:
       self.save_results(results, save_dir, hms)
-      print(eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(results, hms)))
+      eval(self.gtFrames, self.gtFramesSingle, self.convert_eval_format(results, hms))
     else:
       dets = {}
       hms = {}

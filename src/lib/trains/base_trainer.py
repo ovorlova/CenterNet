@@ -109,8 +109,7 @@ class BaseTrainer(object):
         self.save_result(output, batch, results)
       if phase == 'val':
         self.save_result(output, batch, results)
-        
-      #print(losses)
+
       del output, loss, loss_stats
     
     bar.finish()
@@ -125,18 +124,9 @@ class BaseTrainer(object):
             writer.add_scalar('Train/'+ls, np.array(losses[ls][i*25:i*25+50]).mean(), 1000*((epoch-1)+(i)/(ln//25)))
           writer.add_scalar('Train/'+ls, np.array(losses[ls][ln-50:ln]).mean(), 1000*((epoch-1)+(ln//25-1)/(ln//25)))
       else:
-        #detections = self.merge_outputs(detections)
         for ls in losses:
           writer.add_scalar('Val/'+ls, np.array(losses[ls]).mean(), epoch)
-        #results = [detections, hms]
-        
 
-    '''if writer is not None:
-        if phase == 'train':
-          writer.add_scalar('Train/Loss', loss, epoch*len(data_loader)+iter_id)
-        else:
-          writer.add_scalar('Val/Loss', loss, epoch*len(data_loader)+iter_id)'''
-    
 
     return ret, results, writer
   

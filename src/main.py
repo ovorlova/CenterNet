@@ -16,6 +16,7 @@ from datasets.dataset_factory import get_dataset
 from trains.train_factory import train_factory
 from tensorboardX import SummaryWriter
 from os import system
+import math
 
 def main(opt):
   torch.manual_seed(opt.seed)
@@ -32,11 +33,14 @@ def main(opt):
   
   print('Creating model...')
   model = create_model(opt.arch, opt.heads, opt.head_conv)
-  optimizer = torch.optim.Adam(model.parameters(), opt.lr)
+  lr = opt.lr
+  if (opt.cycle_exp):
+    lr = opt.max_lr
+  optimizer = torch.optim.Adam(model.parameters(), lr)
   start_epoch = 0
   if opt.load_model != '':
     model, optimizer, start_epoch = load_model(
-      model, opt.load_model, optimizer, opt.resume, opt.lr, opt.lr_step)
+      model, opt.load_model, optimizer, opt.resume, lr, opt.lr_step)
 
   Trainer = train_factory[opt.task]
   trainer = Trainer(opt, model, optimizer)
@@ -71,6 +75,8 @@ def main(opt):
 
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
+    print('learning rate: ', lr)
+    writer.add_scalar('Learning rate', lr, epoch)
     mark = epoch if opt.save_all else 'last'
     log_dict_train, _, writer = trainer.train(epoch, train_loader, writer)
     logger.write('epoch: {} |'.format(epoch))
@@ -79,6 +85,8 @@ def main(opt):
       logger.write('{} {:8f} | '.format(k, v))
     if opt.val_intervals > 0 and epoch % opt.val_intervals == 0:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(mark)), 
+                 epoch, model, optimizer)
+      save_model(os.path.join(opt.save_dir, 'model_val{}.pth'.format(str(epoch))), 
                  epoch, model, optimizer)
       with torch.no_grad():
         log_dict_val, preds, writer = trainer.val(epoch, val_loader, writer)
@@ -91,19 +99,31 @@ def main(opt):
                    epoch, model)
       ap, pckh = val_loader.dataset.run_eval(preds, '')
       for name in ap:
-          writer.add_scalar('Test_AP/'+ name, ap[name], epoch//opt.val_intervals)
+          writer.add_scalar('Test_AP/'+ name, ap[name], epoch)
       for name in pckh:
-          writer.add_scalar('Test_PCKh/'+name, pckh[name], epoch//opt.val_intervals)
+          writer.add_scalar('Test_PCKh/'+name, pckh[name], epoch)
 
     else:
       save_model(os.path.join(opt.save_dir, 'model_last.pth'), 
                  epoch, model, optimizer)
     logger.write('\n')
+    if (opt.cycle_exp):
+      iteration = epoch+opt.step_size
+      cycle = math.floor(1.+(iteration)/(2.*opt.step_size))
+      x = abs(iteration/opt.step_size - 2.*cycle + 1.)
+      lr= opt.base_lr + (opt.max_lr-opt.base_lr)*max(0., (1.-x))*gamma**(iteration)
+      for param_group in optimizer.param_groups:
+          param_group['lr'] = lr
+
     if epoch in opt.lr_step:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)), 
                  epoch, model, optimizer)
       lr = opt.lr * (0.1 ** (opt.lr_step.index(epoch) + 1))
       print('Drop LR to', lr)
+      for param_group in optimizer.param_groups:
+          param_group['lr'] = lr
+    if opt.exp_lr:
+      lr *= opt.gamma
       for param_group in optimizer.param_groups:
           param_group['lr'] = lr
   logger.close()
