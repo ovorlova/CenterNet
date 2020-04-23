@@ -32,9 +32,9 @@
 
     check your version of CUDA and install correct version of pytorch
 
-####For CUDA >= 10.0 use pytorch==1.0
+#### For CUDA >= 10.0 use pytorch==1.0
 
-####For CUDA < 10.0 use pytorch==0.4.1
+#### For CUDA < 10.0 use pytorch==0.4.1
 
     ~~~
     nvcc --version
@@ -105,7 +105,7 @@
 
 13. How to solve some of errors
 
-####ImportError: cannot import name 'PILLOW_VERSION'
+#### ImportError: cannot import name 'PILLOW_VERSION'
 
 pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
     ~~~
