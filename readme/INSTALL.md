@@ -38,8 +38,8 @@
 
     ~~~
     nvcc --version
-    conda install pytorch torchvision cudatoolkit==10.0 -c pytorch
-    ~~~~
+    conda install pytorch==1.0 torchvision -c pytorch
+    ~~~
 
 
      
@@ -108,9 +108,11 @@
 #### ImportError: cannot import name 'PILLOW_VERSION'
 
 pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
+
     ~~~
     pip install Pillow==6.1
     ~~~
+
 ####Some problems with CUDA
 
 

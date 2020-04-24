@@ -17,6 +17,7 @@ from trains.train_factory import train_factory
 from tensorboardX import SummaryWriter
 from os import system
 import math
+import time
 
 def main(opt):
   torch.manual_seed(opt.seed)
@@ -70,8 +71,10 @@ def main(opt):
   )
 
   print('Starting training...')
-  exp_id = 'exp/'+opt.exp_id
-  writer = SummaryWriter(exp_id)
+
+  time_str = time.strftime('%Y-%m-%d-%H-%M')
+  writer_dir = opt.save_dir + '/logs_{}'.format(time_str)
+  writer = SummaryWriter(writer_dir)
 
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
