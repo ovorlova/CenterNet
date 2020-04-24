@@ -113,11 +113,7 @@ pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
     pip install Pillow==6.1
     ~~~
 
-####Some problems with CUDA
-
-
-
-####  DCNv2: undefined symbol: __cudaRegisterFatBinaryEnd
+####  DCNv2: undefined symbol: __cudaRegisterFatBinaryEnd or error: command 'g++' failed with exit status 1
 
     ~~~
     cd ~/Code/CenterNet/src/lib/models/networks
@@ -125,13 +121,5 @@ pillow 7.0.0 has removed `PILLOW_VERSION`, you should install another version
     git clone https://github.com/CharlesShang/DCNv2.git
     cd DCNv2
     sh make.sh
-    ~~~
-
-####  error: command 'g++' failed with exit status 1
-
-install cython:
-
-    ~~~
-    conda install cython
     ~~~
 
