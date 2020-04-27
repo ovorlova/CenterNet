@@ -110,6 +110,7 @@ class MPII(data.Dataset):
               "keypoints": keypoints
           }
           detections.append(detection)
+          cur_id
     data = detections
     dct_image_id = {}
     for i in range(len(data)):
