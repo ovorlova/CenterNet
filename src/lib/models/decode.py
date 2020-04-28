@@ -568,7 +568,4 @@ def multi_pose_decode(
       kps = kps.permute(0, 2, 1, 3).contiguous().view(
           batch, K, num_joints * 2)
   detections = torch.cat([bboxes, scores, kps, clses], dim=2)
-  if is_train == True:
-      return detections
-  else:
-      return [detections, hm_score.tolist()]
+  return [detections, hm_score.tolist()]
