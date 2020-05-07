@@ -17,7 +17,6 @@ from trains.train_factory import train_factory
 from tensorboardX import SummaryWriter
 from os import system
 import math
-import time
 
 def main(opt):
   torch.manual_seed(opt.seed)
@@ -57,8 +56,8 @@ def main(opt):
   )
 
   if opt.test:
-    _, preds = trainer.val(0, val_loader)
-    val_loader.dataset.run_eval(preds, opt.save_dir)
+    _, preds, _, hms = trainer.val(0, val_loader, None)
+    val_loader.dataset.run_eval(preds, '', hms=hms)
     return
 
   train_loader = torch.utils.data.DataLoader(
@@ -71,17 +70,15 @@ def main(opt):
   )
 
   print('Starting training...')
-
-  time_str = time.strftime('%Y-%m-%d-%H-%M')
-  writer_dir = opt.save_dir + '/logs_{}'.format(time_str)
-  writer = SummaryWriter(writer_dir)
+  exp_id = 'exp/'+opt.exp_id
+  writer = SummaryWriter(exp_id)
 
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
     print('learning rate: ', lr)
     writer.add_scalar('Learning rate', lr, epoch)
     mark = epoch if opt.save_all else 'last'
-    log_dict_train, _, writer = trainer.train(epoch, train_loader, writer)
+    log_dict_train, _, writer, _ = trainer.train(epoch, train_loader, writer)
     logger.write('epoch: {} |'.format(epoch))
     for k, v in log_dict_train.items():
       logger.scalar_summary('train_{}'.format(k), v, epoch)
@@ -89,10 +86,9 @@ def main(opt):
     if opt.val_intervals > 0 and epoch % opt.val_intervals == 0:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(mark)), 
                  epoch, model, optimizer)
-      save_model(os.path.join(opt.save_dir, 'model_val{}.pth'.format(str(epoch))), 
-                 epoch, model, optimizer)
+    
       with torch.no_grad():
-        log_dict_val, preds, writer = trainer.val(epoch, val_loader, writer)
+        log_dict_val, preds, writer, hms = trainer.val(epoch, val_loader, writer)
       for k, v in log_dict_val.items():
         logger.scalar_summary('val_{}'.format(k), v, epoch)
         logger.write('{} {:8f} | '.format(k, v))
@@ -100,7 +96,10 @@ def main(opt):
         best = log_dict_val[opt.metric]
         save_model(os.path.join(opt.save_dir, 'model_best.pth'), 
                    epoch, model)
-      ap, pckh = val_loader.dataset.run_eval(preds, '')
+      if opt.not_hm_hp:
+        ap, pckh = val_loader.dataset.run_eval(preds, '', hms=None, score=opt.score)
+      else:
+        ap, pckh = val_loader.dataset.run_eval(preds, '', hms=hms)
       for name in ap:
           writer.add_scalar('Test_AP/'+ name, ap[name], epoch)
       for name in pckh:
@@ -129,6 +128,9 @@ def main(opt):
       lr *= opt.gamma
       for param_group in optimizer.param_groups:
           param_group['lr'] = lr
+    if epoch % 25 == 0:
+      save_model(os.path.join(opt.save_dir, 'model_val{}.pth'.format(str(epoch))), 
+                 epoch, model, optimizer)
   logger.close()
   writer.close()
 

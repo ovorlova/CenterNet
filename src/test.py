@@ -82,7 +82,7 @@ def prefetch_test(opt):
         t, tm = avg_time_stats[t])
     bar.next()
   bar.finish()
-  dataset.run_eval(results, opt.save_dir, hms=hms, test=True)
+  dataset.run_eval(results, opt.save_dir, hms=hms, test=True, score=opt.score)
 
 def test(opt):
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
@@ -122,7 +122,7 @@ def test(opt):
       Bar.suffix = Bar.suffix + '|{} {:.3f} '.format(t, avg_time_stats[t].avg)
     bar.next()
   bar.finish()
-  dataset.run_eval(results, opt.save_dir, hms=hms, test=True)
+  dataset.run_eval(results, opt.save_dir, hms=hms, test=True, score=opt.score)
 
 if __name__ == '__main__':
   opt = opts().parse()
