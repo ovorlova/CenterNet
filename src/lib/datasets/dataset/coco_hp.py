@@ -30,15 +30,15 @@ class COCOHP(data.Dataset):
     
     self.acc_idxs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     self.data_dir = os.path.join(opt.data_dir, 'coco')
-    self.img_dir = os.path.join(self.data_dir, '{}2017'.format(split))
+    self.img_dir = self.data_dir
     if split == 'test':
       self.annot_path = os.path.join(
           self.data_dir, 'annotations', 
-          'image_info_test-dev2017.json').format(split)
+          'val.json').format(split)
     else:
       self.annot_path = os.path.join(
         self.data_dir, 'annotations', 
-        'person_keypoints_{}2017.json').format(split)
+        '{}.json').format(split)
     self.max_objs = 32
     self._data_rng = np.random.RandomState(123)
     self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571],
@@ -82,8 +82,8 @@ class COCOHP(data.Dataset):
           score = dets[4]
           bbox_out  = list(map(self._to_float, bbox))
           keypoints = np.concatenate([
-            np.array(dets[5:39], dtype=np.float32).reshape(-1, 2), 
-            np.ones((17, 1), dtype=np.float32)], axis=1).reshape(51).tolist()
+            np.array(dets[5:37], dtype=np.float32).reshape(-1, 2), 
+            np.ones((16, 1), dtype=np.float32)], axis=1).reshape(48).tolist()
           keypoints  = list(map(self._to_float, keypoints))
 
           detection = {
@@ -110,10 +110,10 @@ class COCOHP(data.Dataset):
     # json.dump(detections, open(result_json, "w"))
     self.save_results(results, save_dir)
     coco_dets = self.coco.loadRes('{}/results.json'.format(save_dir))
-    coco_eval = COCOeval(self.coco, coco_dets, "keypoints")
-    coco_eval.evaluate()
-    coco_eval.accumulate()
-    coco_eval.summarize()
+    #coco_eval = COCOeval(self.coco, coco_dets, "keypoints")
+    #coco_eval.evaluate()
+    #coco_eval.accumulate()
+    #coco_eval.summarize()
     coco_eval = COCOeval(self.coco, coco_dets, "bbox")
     coco_eval.evaluate()
     coco_eval.accumulate()

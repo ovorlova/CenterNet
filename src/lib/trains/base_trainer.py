@@ -55,6 +55,7 @@ class BaseTrainer(object):
 
     opt = self.opt
     results = {}
+    hms = {}
     data_time, batch_time = AverageMeter(), AverageMeter()
     avg_loss_stats = {l: AverageMeter() for l in self.loss_stats}
     num_iters = len(data_loader) if opt.num_iters < 0 else opt.num_iters
@@ -65,8 +66,6 @@ class BaseTrainer(object):
     for ls in avg_loss_stats:
       losses[ls] = []
     losses['loss'] = []
-    detections = []
-    hms = []
     for iter_id, batch in enumerate(data_loader):
       if iter_id >= num_iters:
         break
@@ -77,6 +76,7 @@ class BaseTrainer(object):
           batch[k] = batch[k].to(device=opt.device, non_blocking=True)    
       output, loss, loss_stats = model_with_loss(batch)
       loss = loss.mean()
+ 
       
       if phase == 'train':
         self.optimizer.zero_grad()
@@ -89,6 +89,8 @@ class BaseTrainer(object):
         epoch, iter_id, num_iters, phase=phase,
         total=bar.elapsed_td, eta=bar.eta_td)
       for l in avg_loss_stats:
+        if opt.not_hm_hp and (l == 'hm_hp_loss' or l == 'hp_offset_loss'):
+          continue
         avg_loss_stats[l].update(
           loss_stats[l].mean().item(), batch['input'].size(0))
         losses[l].append(avg_loss_stats[l].avg)
@@ -104,19 +106,15 @@ class BaseTrainer(object):
       
       if opt.debug > 0:
         self.debug(batch, output, iter_id)
-      
-      if opt.test:
-        self.save_result(output, batch, results)
-      if phase == 'val':
-        self.save_result(output, batch, results)
-
+      if opt.test or phase == 'val':
+        self.save_result(output, batch, results, hms)
       del output, loss, loss_stats
     
     bar.finish()
     ret = {k: v.avg for k, v in avg_loss_stats.items()}
     ret['time'] = bar.elapsed_td.total_seconds() / 60.
-    
-    if writer is not None:
+
+    if writer is not None and opt.not_hm_hp == False:
       if phase == 'train':
         ln = len(losses['loss'])
         for ls in losses:
@@ -126,9 +124,8 @@ class BaseTrainer(object):
       else:
         for ls in losses:
           writer.add_scalar('Val/'+ls, np.array(losses[ls]).mean(), epoch)
-
-
-    return ret, results, writer
+    
+    return ret, results, writer, hms
   
   def debug(self, batch, output, iter_id):
     raise NotImplementedError

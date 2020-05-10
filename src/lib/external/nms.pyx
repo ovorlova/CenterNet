@@ -211,7 +211,7 @@ def soft_nms_39(np.ndarray[float, ndim=2] boxes, float sigma=0.5, float Nt=0.3, 
         boxes[maxpos,3] = ty2
         boxes[maxpos,4] = ts
 
-        for j in range(5, 39):
+        for j in range(5, 38):
             tmp = boxes[i, j]
             boxes[i, j] = boxes[maxpos, j]
             boxes[maxpos, j] = tmp
@@ -262,7 +262,7 @@ def soft_nms_39(np.ndarray[float, ndim=2] boxes, float sigma=0.5, float Nt=0.3, 
                         boxes[pos,2] = boxes[N-1, 2]
                         boxes[pos,3] = boxes[N-1, 3]
                         boxes[pos,4] = boxes[N-1, 4]
-                        for j in range(5, 39):
+                        for j in range(5, 38):
                             tmp = boxes[pos, j]
                             boxes[pos, j] = boxes[N - 1, j]
                             boxes[N - 1, j] = tmp

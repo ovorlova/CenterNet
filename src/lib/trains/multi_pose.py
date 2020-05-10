@@ -146,20 +146,21 @@ class MultiPoseTrainer(BaseTrainer):
       else:
         debugger.show_all_imgs(pause=True)
 
-  def save_result(self, output, batch, results):
+  def save_result(self, output, batch, results, hms):
     reg = output['reg'] if self.opt.reg_offset else None
     hm_hp = output['hm_hp'] if self.opt.hm_hp else None
     hp_offset = output['hp_offset'] if self.opt.reg_hp_offset else None
     dets = multi_pose_decode(
       output['hm'], output['wh'], output['hps'], 
       reg=reg, hm_hp=hm_hp, hp_offset=hp_offset, K=self.opt.K, is_train = False)
-    hms = dets[1]
+    hms_score = dets[1]
     dets = dets[0]
     dets = dets.detach().cpu().numpy().reshape(1, -1, dets.shape[2])
-    
+    #print(batch['meta']['img_id'].cpu().numpy())
     dets_out = multi_pose_post_process(
       dets.copy(), batch['meta']['c'].cpu().numpy(),
       batch['meta']['s'].cpu().numpy(),
       output['hm'].shape[2], output['hm'].shape[3])
-    results[batch['meta']['img_id'].cpu().numpy()[0]] =[ dets_out[0], hms ]
-    results
+    results[batch['meta']['img_id'].cpu().numpy()[0]] = dets_out[0]
+    hms[batch['meta']['img_id'].cpu().numpy()[0]] = [hms_score]
+
