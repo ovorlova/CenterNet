@@ -37,11 +37,16 @@ class MPII(data.Dataset):
     if split == 'test':
       self.annot_path = os.path.join(
           self.data_dir, 'annotations', 
-          'val.json').format(split)
+          '{}.json').format(split)
     else:
       self.annot_path = os.path.join(
         self.data_dir, 'annotations', 
         '{}.json').format(split)
+
+    self.gtFramesSingle = loadGTFrames('../data/coco/annotations/', '{}_single.json'.format(split))
+    self.gtFramesMulti = loadGTFrames('../data/coco/annotations/', '{}_multi.json'.format(split))
+    fopen = open('../data/coco/annotations/{}_multi_inds.txt'.format(split)) 
+
     self.max_objs = 32
     self._data_rng = np.random.RandomState(123)
     self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571],
@@ -54,10 +59,7 @@ class MPII(data.Dataset):
  # https://github.com/xingyizhou/CenterNet/issues/280
     self.split = split
     self.opt = opt
-    self.gtFrames = loadGTFrames('../data/coco/annotations/', 'val_not_single.json')
-    self.gtFramesSingle = loadGTFrames('../data/coco/annotations/', 'val_single.json')
-    self.gtFramesMulti = loadGTFrames('../data/coco/annotations/', 'val_multi.json')
-    fopen = open('../data/coco/annotations/val_multi_inds.txt') 
+
     lines = fopen.readlines()
     self.multiInds = list(map(int, lines[0][1:-2].split(', ')))    
 
@@ -97,7 +99,7 @@ class MPII(data.Dataset):
         category_id = 1
         cur_id = 0
         detections = []
-        dct_image_id[inds[image_id]] = []
+        #dct_image_id[inds[image_id]] = []
         for dets in all_bboxes[image_id][cls_ind]:
           score = dets[4]
           scores =  np.ones((16, 1), dtype=np.float32)
@@ -117,23 +119,24 @@ class MPII(data.Dataset):
             y = keypoints[key*3+1]
             _score = keypoints[key*3+2]
             annopoints.append({'id': [_id], 'x': [x], 'y': [y], 'score' : [_score]})
-          if score>=score_:
-            detections.append({'score': [score], 'annopoints' : [{"point": annopoints}]})
-        #detections.sort(reverse=True, key=lambda x: x['score'][0])
-        #final_detections = []
-        #counter = 0
-        #for detection in detections:
-        #  if detection['score'][0] >= score_:
-        #    final_detections.append(detection)
-        #    counter+=1
-        #  else:
-        #    break
-        #while (counter < 5):
-        #  final_detections.append(detections[counter])
-        #  counter+=1
-        #  #if score>=score_:
-        dct_image_id[inds[image_id]] = detections
-
+          #if score>=score_:
+          detections.append({'score': [score], 'annopoints' : [{"point": annopoints}]})
+        detections.sort(reverse=True, key=lambda x: x['score'][0])
+        final_detections = []
+        counter = 0
+        for detection in detections:
+          if detection['score'][0] >= score_:
+            final_detections.append(detection)
+            counter+=1
+          else:
+            break
+        while (counter < 2):
+          final_detections.append(detections[counter])
+          counter+=1
+          #if score>=score_:
+       
+        dct_image_id[inds[image_id]] = final_detections
+    print("len of dict: ", len(dct_image_id))
     final_lst = []
     for key in dct_image_id:
         final_lst.append({'image' : [{'name' : key}], 'annorect' : dct_image_id[key]})
@@ -147,8 +150,8 @@ class MPII(data.Dataset):
               open('{}/results.json'.format(save_dir), 'w'))
 
   def run_eval(self, results, save_dir, hms=None, test=False, score=0.0):
-    if test == True:
-      self.save_results(results, save_dir, hms)
+    #if test == True:
+    #  self.save_results(results, save_dir, hms)
     if hms is not None:
       return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, hms, score_=score), 
                           self.gtFramesMulti, self.convert_eval_format(results, hms, score_=score, multi=True))
