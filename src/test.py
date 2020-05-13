@@ -20,6 +20,7 @@ from datasets.dataset_factory import dataset_factory
 from detectors.detector_factory import detector_factory
 import json
 import pickle
+from tensorboardX import SummaryWriter
 
 
 class PrefetchDataset(torch.utils.data.Dataset):
@@ -47,6 +48,32 @@ class PrefetchDataset(torch.utils.data.Dataset):
   def __len__(self):
     return len(self.images)
 
+def test_k(dataset, results, hms, K):
+  writer = SummaryWriter('testK')
+  print("Evaluation per num K of preds:")
+  for k in range(1, K+1):
+    print('current k: ', k)
+    ap, pckh = dataset.run_eval(results, opt.save_dir, hms=hms, test=True, test_k=True, k_=k)
+    for name in ap:
+        writer.add_scalar('Test_AP/'+ name, ap[name], k)
+    for name in pckh:
+        writer.add_scalar('Test_PCKh/'+name, pckh[name], k)
+  writer.close()
+
+def test_score(dataset, results, hms,  step=0.05, minNum=0):
+  writer = SummaryWriter('testScore')
+  print("Evaluation per score of preds:")
+  for score in np.arange(0., 1+step, step):
+    print('current score: ', score)
+    ap, pckh = dataset.run_eval(results, opt.save_dir, hms=hms, test=True, test_score=True,min_for_score=minNum, score=score)
+    for name in ap:
+        writer.add_scalar('Test_AP/'+ name, ap[name], score*100)
+    for name in pckh:
+        writer.add_scalar('Test_PCKh/'+name, pckh[name], score*100)
+  writer.close()
+  
+
+
 def prefetch_test(opt):
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
 
@@ -56,7 +83,7 @@ def prefetch_test(opt):
   Logger(opt)
   Detector = detector_factory[opt.task]
   
-  split = 'val' if not opt.trainval else 'test'
+  split = opt.split
   dataset = Dataset(opt, split)
   detector = Detector(opt)
   
@@ -82,7 +109,12 @@ def prefetch_test(opt):
         t, tm = avg_time_stats[t])
     bar.next()
   bar.finish()
+  if opt.test_k:
+    test_k(dataset, results, hms, opt.test_k_max)
+  if opt.test_score:
+    test_score(dataset, results, hms,  opt.test_score_step, opt.test_score_min)
   dataset.run_eval(results, opt.save_dir, hms=hms, test=True, score=opt.score)
+  
 
 def test(opt):
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str

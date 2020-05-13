@@ -99,7 +99,7 @@ def main(opt):
       if opt.not_hm_hp:
         ap, pckh = val_loader.dataset.run_eval(preds, '', hms=None, score=opt.score)
       else:
-        ap, pckh = val_loader.dataset.run_eval(preds, '', hms=hms)
+        ap, pckh = val_loader.dataset.run_eval(preds, '', hms=hms, score=opt.score)
       for name in ap:
           writer.add_scalar('Test_AP/'+ name, ap[name], epoch)
       for name in pckh:
@@ -128,7 +128,7 @@ def main(opt):
       lr *= opt.gamma
       for param_group in optimizer.param_groups:
           param_group['lr'] = lr
-    if epoch % 25 == 0:
+    if epoch % 5 == 0:
       save_model(os.path.join(opt.save_dir, 'model_val{}.pth'.format(str(epoch))), 
                  epoch, model, optimizer)
   logger.close()

@@ -37,7 +37,7 @@ class MPII(data.Dataset):
     if split == 'test':
       self.annot_path = os.path.join(
           self.data_dir, 'annotations', 
-          'val.json').format(split)
+          '{}.json'.format(split))
     else:
       self.annot_path = os.path.join(
         self.data_dir, 'annotations', 
@@ -54,12 +54,15 @@ class MPII(data.Dataset):
  # https://github.com/xingyizhou/CenterNet/issues/280
     self.split = split
     self.opt = opt
-    self.gtFrames = loadGTFrames('../data/coco/annotations/', 'val_not_single.json')
-    self.gtFramesSingle = loadGTFrames('../data/coco/annotations/', 'val_single.json')
-    self.gtFramesMulti = loadGTFrames('../data/coco/annotations/', 'val_multi.json')
-    fopen = open('../data/coco/annotations/val_multi_inds.txt') 
+    self.gtFramesSingle = loadGTFrames('../data/coco/annotations/', '{}_single.json'.format(split))
+    self.gtFramesMulti = loadGTFrames('../data/coco/annotations/', '{}_multi.json'.format(split))
+    fopen = open('../data/coco/annotations/{}_multi_inds.txt'.format(split)) 
     lines = fopen.readlines()
     self.multiInds = list(map(int, lines[0][1:-2].split(', ')))    
+
+    fopen = open('../data/coco/annotations/{}_single_inds.txt'.format(split)) 
+    lines = fopen.readlines()
+    self.singleInds = list(map(int, lines[0][1:-2].split(', ')))    
 
 
     print('==> initializing mpii {} data.'.format(split))
@@ -80,7 +83,7 @@ class MPII(data.Dataset):
   def _to_float(self, x):
     return float("{:.2f}".format(x))
 
-  def convert_eval_format(self, all_bboxes, hms=None, score_=0.0, multi=False):
+  def convert_eval_format(self, all_bboxes, hms=None, test_score=False, score_=0.0, min_for_score=0, multi=False, test_k=False, k_=11):
     
     data = json.load(open(self.annot_path, 'r'))
     imgs = data['images']
@@ -92,6 +95,9 @@ class MPII(data.Dataset):
     for image_id in all_bboxes:
       if multi and image_id not in self.multiInds:
          continue
+      if not multi and image_id not in self.singleInds:
+         continue
+      
       detections = []
       for cls_ind in all_bboxes[image_id]:
         category_id = 1
@@ -117,22 +123,29 @@ class MPII(data.Dataset):
             y = keypoints[key*3+1]
             _score = keypoints[key*3+2]
             annopoints.append({'id': [_id], 'x': [x], 'y': [y], 'score' : [_score]})
-          if score>=score_:
-            detections.append({'score': [score], 'annopoints' : [{"point": annopoints}]})
-        #detections.sort(reverse=True, key=lambda x: x['score'][0])
-        #final_detections = []
-        #counter = 0
-        #for detection in detections:
-        #  if detection['score'][0] >= score_:
-        #    final_detections.append(detection)
-        #    counter+=1
-        #  else:
-        #    break
-        #while (counter < 5):
-        #  final_detections.append(detections[counter])
-        #  counter+=1
-        #  #if score>=score_:
-        dct_image_id[inds[image_id]] = detections
+          #if score>=score_:
+          detections.append({'score': [score], 'annopoints' : [{"point": annopoints}]})          
+        
+        detections.sort(reverse=True, key=lambda x: x['score'][0])
+
+        final_detections = []
+        counter = 0
+        if test_score:
+          for detection in detections:
+            if detection['score'][0] >= score_:
+              final_detections.append(detection)
+              counter+=1
+            else:
+              break
+          while (counter < min_for_score):
+            final_detections.append(detections[counter])
+            counter+=1
+        elif test_k:
+          final_detections = detections[:min(len(detections), k_)]
+        else:
+          final_detections = detections
+
+        dct_image_id[inds[image_id]] = final_detections
 
     final_lst = []
     for key in dct_image_id:
@@ -146,12 +159,17 @@ class MPII(data.Dataset):
     json.dump(self.convert_eval_format(results, hms), 
               open('{}/results.json'.format(save_dir), 'w'))
 
-  def run_eval(self, results, save_dir, hms=None, test=False, score=0.0):
+  def run_eval(self, results, save_dir, hms=None, test=False, test_score=False, score=0.0, min_for_score=0, multi=False, test_k=False, k_=11):
+    
     if test == True:
       self.save_results(results, save_dir, hms)
     if hms is not None:
-      return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, hms, score_=score), 
-                          self.gtFramesMulti, self.convert_eval_format(results, hms, score_=score, multi=True))
+      return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, hms, score_=score,
+                          test_score=test_score, min_for_score=min_for_score, multi=False, test_k=test_k, k_=k_), 
+                          self.gtFramesMulti, self.convert_eval_format(results, hms, score_=score,
+                          test_score=test_score, min_for_score=min_for_score, multi=True, test_k=test_k, k_=k_))
     else:
       return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, None), 
                           self.gtFramesMulti, self.convert_eval_format(results, None, multi=True))
+
+                           
