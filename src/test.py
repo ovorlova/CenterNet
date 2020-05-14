@@ -93,14 +93,19 @@ def prefetch_test(opt):
 
   results = {}
   hms = {}
+  time_stats_dict = {}
   num_iters = len(dataset)
   bar = Bar('{}'.format(opt.exp_id), max=num_iters)
   time_stats = ['tot', 'load', 'pre', 'net', 'dec', 'post', 'merge']
+  for time in time_stats:
+    time_stats_dict[time] = []
   avg_time_stats = {t: AverageMeter() for t in time_stats}
   for ind, (img_id, pre_processed_images) in enumerate(data_loader):
     ret = detector.run(pre_processed_images)
     results[img_id.numpy().astype(np.int32)[0]] = ret['results']
     hms[img_id.numpy().astype(np.int32)[0]] = ret['hm_score']
+    for time in time_stats:
+      time_stats_dict[time].append(ret[time])
     Bar.suffix = '[{0}/{1}]|Tot: {total:} |ETA: {eta:} '.format(
                    ind, num_iters, total=bar.elapsed_td, eta=bar.eta_td)
     for t in avg_time_stats:
@@ -114,6 +119,7 @@ def prefetch_test(opt):
   if opt.test_score:
     test_score(dataset, results, hms,  opt.test_score_step, opt.test_score_min)
   dataset.run_eval(results, opt.save_dir, hms=hms, test=True, score=opt.score)
+  json.dump(time_stats_dict, open('test_score.json', 'w'))
   
 
 def test(opt):
