@@ -13,7 +13,7 @@ import torch.utils.data as data
 import sys
 ##sys.path.append(os.path.join(sys.path[0], '../../../../eval'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../eval'))
-from evaluate import eval, pseudo_eval
+from evaluate import eval
 from eval_helpers import *
 
 class MPII(data.Dataset):
@@ -164,12 +164,12 @@ class MPII(data.Dataset):
     if test == True:
       self.save_results(results, save_dir, hms)
     if hms is not None:
-      return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, hms, score_=score,
+      return eval(self.gtFramesSingle, self.convert_eval_format(results, hms, score_=score,
                           test_score=test_score, min_for_score=min_for_score, multi=False, test_k=test_k, k_=k_), 
                           self.gtFramesMulti, self.convert_eval_format(results, hms, score_=score,
                           test_score=test_score, min_for_score=min_for_score, multi=True, test_k=test_k, k_=k_))
     else:
-      return pseudo_eval(self.gtFramesSingle, self.convert_eval_format(results, None), 
+      return eval(self.gtFramesSingle, self.convert_eval_format(results, None), 
                           self.gtFramesMulti, self.convert_eval_format(results, None, multi=True))
 
                            
