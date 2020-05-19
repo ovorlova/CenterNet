@@ -3,4 +3,4 @@
 	url = https://github.com/ovorlova/convert
 [submodule "eval"]
 	path = eval
-	url = https://github.com/ovorlova/eval.git
+	url = https://github.com/ovorlova/eval
