@@ -20,6 +20,8 @@ Our results:
 | Hourglass-104 (256 × 256) | 86.3  | 64.8 | 3.8  |
 | DLA-34                    | 88.16 | 69.4 | 5.2  |
 
+These models available [here](https://drive.google.com/drive/folders/1tgyWZCV0tTxs0ZW2vIpad7YgoAjUaEMA?usp=sharing).
+
 ## Installation
 
 Please refer to [INSTALL.md](readme/INSTALL.md) for installation instructions.
